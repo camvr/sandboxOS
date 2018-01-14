@@ -16,6 +16,9 @@ KERNEL_NAME=sandbox
 
 QEMU=qemu-system-i386
 
+
+.PHONY: clean run cdrom
+
 all: $(KERNEL_NAME).bin
 
 $(BOOT).o: $(BOOT).$(BOOT_EXT)
@@ -25,15 +28,17 @@ $(KERNEL).o: $(KERNEL).$(KERNEL_EXT)
 	$(GCC) -c $(KERNEL).$(KERNEL_EXT) -o $(KERNEL).o $(CFLAGS)
 
 $(KERNEL_NAME).bin: $(BOOT).o $(KERNEL).o $(LINK)
-	$(LINKER) -T $(LINK) -o $(KERNEL_NAME).bin
+	$(LINKER) -T $(LINK) -o $(KERNEL_NAME).bin $(LFLAGS)
 
 run:
-	ifeq (,$(wildcard  $(KERNEL_NAME).iso))
+	ifeq ("$(wildcard $(./$(KERNEL_NAME).iso))","")
 		$(QEMU) -cdrom $(KERNEL_NAME).iso
-	else ifeq (,$(wildcard  $(KERNEL_NAME).bin))
-		$(QEMU) -kernel $(KERNEL_NAME).bin
-	else
-		$(error Binary or cd image required to run the kernel.)
+	else 
+		ifeq ("$(wildcard $(./$(KERNEL_NAME).bin))","")
+			$(QEMU) -kernel $(KERNEL_NAME).bin
+		else
+			$(error Binary or cd image required to run the kernel.)
+		endif
 	endif
 
 cdrom: $(KERNEL_NAME).bin
@@ -46,6 +51,5 @@ cdrom: $(KERNEL_NAME).bin
 	#grub-mkrescue -o $(KERNEL_NAME).iso isodir
 	#rm -rf isodir
 
-.PHONY: clean
 clean:
 	rm *.o $(KERNEL_NAME).bin
